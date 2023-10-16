@@ -1,0 +1,1 @@
+Add-VpnConnection -AllUserConnection $true -Name "$env:name" -ServerAddress $env:serveraddress -TunnelType L2tp -DNSSuffix "$env:dnssuffix" -EncryptionLevel Required -AuthenticationMethod PAP -L2tpPsk "$env:vpnpassword" -Force -PassThru
