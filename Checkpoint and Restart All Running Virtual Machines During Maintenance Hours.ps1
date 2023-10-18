@@ -42,55 +42,59 @@ $result = CheckTimeInHST -startTime $start -endTime $end
 
 # Check if the result is True, and if so, run a command
 if ($result) {
+    # Get the current timestamp
+    $timestamp = Get-Date -Format "yyyyMMddHHmmss"
+
     # Replace the following line with your desired command
-    Write-Host "Attempting to create a snapshot of all running virtual machines."
-	# Create a snapshot for all running VMs
-	$runningVMs = Get-VM | Where-Object {$_.State -eq 'running'}
-	if ($runningVMs.Count -eq 0) {
-		Write-Host "No running VMs found."
-	} else {
-		$runningVMs | ForEach-Object {
-			Checkpoint-VM -Name $_.Name -SnapshotName "BeforeReboot" -ErrorAction SilentlyContinue
-			if ($?) {
-				Write-Host "Created snapshot for VM: $($_.Name)"
-			} else {
-				Write-Host "Failed to create snapshot for VM: $($_.Name)"
-			}
-		}
-	}
+    Write-Host "Attempting to create a snapshot of all running virtual machines with timestamp $timestamp."
+    # Create a snapshot for all running VMs with a timestamp in the snapshot name
+    $runningVMs = Get-VM | Where-Object {$_.State -eq 'running'}
+    if ($runningVMs.Count -eq 0) {
+        Write-Host "No running VMs found."
+    } else {
+        $runningVMs | ForEach-Object {
+            $snapshotName = "Snapshot_$timestamp"
+            Checkpoint-VM -Name $_.Name -SnapshotName $snapshotName -ErrorAction SilentlyContinue
+            if ($?) {
+                Write-Host "Created snapshot '$snapshotName' for VM: $($_.Name)"
+            } else {
+                Write-Host "Failed to create snapshot for VM: $($_.Name)"
+            }
+        }
+    }
 
-	# Forcefully stop all running VMs
-	Write-Host "Attempting to stop all running virtual machines."
-	$runningVMs = Get-VM | Where-Object {$_.State -eq 'running'}
-	if ($runningVMs.Count -eq 0) {
-		Write-Host "No running VMs found."
-	} else {
-		$runningVMs | ForEach-Object {
-			Stop-VM -Name $_.Name -Force -ErrorAction SilentlyContinue
-			if ($?) {
-				Write-Host "Stopped VM: $($_.Name)"
-			} else {
-				Write-Host "Failed to stop VM: $($_.Name)"
-			}
-		}
-	}
+    # Forcefully stop all running VMs
+    Write-Host "Attempting to stop all running virtual machines."
+    $runningVMs = Get-VM | Where-Object {$_.State -eq 'running'}
+    if ($runningVMs.Count -eq 0) {
+        Write-Host "No running VMs found."
+    } else {
+        $runningVMs | ForEach-Object {
+            Stop-VM -Name $_.Name -Force -ErrorAction SilentlyContinue
+            if ($?) {
+                Write-Host "Stopped VM: $($_.Name)"
+            } else {
+                Write-Host "Failed to stop VM: $($_.Name)"
+            }
+        }
+    }
 
-	# Start all VMs that are set to automatically start
-	Write-Host "Attempting to start all previously running virtual machines."
-	$autoStartVMs = Get-VM | Where-Object {$_.AutomaticStartAction -eq 'Start'}
-	if ($autoStartVMs.Count -eq 0) {
-		Write-Host "No VMs set to automatically start were found."
-	} else {
-		$autoStartVMs | ForEach-Object {
-			Start-VM -Name $_.Name -ErrorAction SilentlyContinue
-			if ($?) {
-				Write-Host "Started VM: $($_.Name)"
-			} else {
-				Write-Host "Failed to start VM: $($_.Name)"
-			}
-		}
-	}
+    # Start all VMs that are set to automatically start
+    Write-Host "Attempting to start all previously running virtual machines."
+    $autoStartVMs = Get-VM | Where-Object {$_.AutomaticStartAction -eq 'Start'}
+    if ($autoStartVMs.Count -eq 0) {
+        Write-Host "No VMs set to automatically start were found."
+    } else {
+        $autoStartVMs | ForEach-Object {
+            Start-VM -Name $_.Name -ErrorAction SilentlyContinue
+            if ($?) {
+                Write-Host "Started VM: $($_.Name)"
+            } else {
+                Write-Host "Failed to start VM: $($_.Name)"
+            }
+        }
+    }
 } else {
     Write-Host "Restart script attempted to run outside of scheduled time."
-	Exit 1
+    Exit 1
 }
