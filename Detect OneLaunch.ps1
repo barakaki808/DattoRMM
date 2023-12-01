@@ -1,5 +1,6 @@
 # Initialize a flag to 0 (not found)
 $foundFlag = 0
+$foundPath = ""
 
 # Get the list of all user profiles
 $userProfiles = Get-WmiObject Win32_UserProfile | Where-Object { $_.Special -eq $false }
@@ -12,9 +13,20 @@ foreach ($profile in $userProfiles) {
     # Check if the OneLaunch folder exists
     if (Test-Path $oneLaunchPath) {
         $foundFlag = 1
+        $foundPath = $oneLaunchPath
         break
     }
 }
 
-# Return 1 if found, 0 otherwise
-return $foundFlag
+# Check if the OneLaunch folder was found and print the results
+if ($foundFlag) {
+    Write-Host "<-Start Result->"
+    Write-Host "Result=OneLaunch folder found: $foundPath"
+    Write-Host "<-End Result->"
+    exit 1
+} else {
+    Write-Host "<-Start Result->"
+    Write-Host "Result=OneLaunch folder does not exist"
+    Write-Host "<-End Result->"
+    exit 0
+}
