@@ -4,6 +4,9 @@
 #
 # Component Variables (set at runtime):
 #   NewiDRACPassword (optional) - The new password to set. If not provided, a secure password is auto-generated.
+#
+# Output:
+#   Writes the new password to device UDF1 for reference.
 
 function Generate-SecurePassword {
     $length = 20
@@ -100,11 +103,12 @@ try {
         }
     }
 
+    # Save password to UDF1
+    New-ItemProperty -Path "HKLM:\SOFTWARE\CentraStage" -Name "Custom1" -Value $newPassword -PropertyType String -Force | Out-Null
+    Write-Host "Password saved to device UDF1."
+
     # Build result message
-    $msg = "iDRAC root password (user ID $userId) reset successfully."
-    if ($passwordGenerated) {
-        $msg += " Generated password: $newPassword"
-    }
+    $msg = "iDRAC root password (user ID $userId) reset successfully. Password written to UDF1."
 
     Write-Host "<-Start Result->"
     Write-Host "Result=$msg"
