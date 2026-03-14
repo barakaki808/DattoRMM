@@ -6,7 +6,8 @@
 #   NewiDRACPassword (optional) - The new password to set. If not provided, a secure password is auto-generated.
 #
 # Output:
-#   Writes the new password to device UDF1 for reference.
+#   UDF1 - New iDRAC password
+#   UDF2 - iDRAC IP address
 
 function Generate-SecurePassword {
     $length = 20
@@ -107,8 +108,31 @@ try {
     New-ItemProperty -Path "HKLM:\SOFTWARE\CentraStage" -Name "Custom1" -Value $newPassword -PropertyType String -Force | Out-Null
     Write-Host "Password saved to device UDF1."
 
+    # Get iDRAC IP address and save to UDF2
+    $idracIP = $null
+    $ipOutput = & $racadmPath get iDRAC.IPv4.Address 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $ipMatch = $ipOutput | Select-String -Pattern '(\d{1,3}\.){3}\d{1,3}'
+        if ($ipMatch) { $idracIP = $ipMatch.Matches[0].Value }
+    }
+    if (-not $idracIP) {
+        # Legacy syntax fallback
+        $ipOutput = & $racadmPath getniccfg 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $ipMatch = $ipOutput | Select-String -Pattern 'IP Address\s*=\s*((\d{1,3}\.){3}\d{1,3})'
+            if ($ipMatch) { $idracIP = $ipMatch.Matches[0].Groups[1].Value }
+        }
+    }
+    if ($idracIP) {
+        New-ItemProperty -Path "HKLM:\SOFTWARE\CentraStage" -Name "Custom2" -Value $idracIP -PropertyType String -Force | Out-Null
+        Write-Host "iDRAC IP address ($idracIP) saved to device UDF2."
+    } else {
+        Write-Host "WARNING: Could not retrieve iDRAC IP address."
+    }
+
     # Build result message
     $msg = "iDRAC root password (user ID $userId) reset successfully. Password written to UDF1."
+    if ($idracIP) { $msg += " iDRAC IP: $idracIP (UDF2)." }
 
     Write-Host "<-Start Result->"
     Write-Host "Result=$msg"
