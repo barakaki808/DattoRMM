@@ -2,7 +2,7 @@
 # Resets the default root (user ID 2) password on Dell iDRAC from the host OS.
 # Requires Dell RACADM to be installed (OpenManage Server Administrator or iDRAC Service Module).
 #
-# DattoRMM Variables:
+# Component Variables (set at runtime):
 #   NewiDRACPassword (optional) - The new password to set. If not provided, a secure password is auto-generated.
 
 function Generate-SecurePassword {
@@ -69,9 +69,9 @@ $passwordGenerated = $false
 if ([string]::IsNullOrWhiteSpace($newPassword)) {
     $newPassword = Generate-SecurePassword
     $passwordGenerated = $true
-    Write-Host "No password provided via site variable. A secure password has been generated."
+    Write-Host "No password provided via component variable. A secure password has been generated."
 } else {
-    Write-Host "Using password from DattoRMM site variable."
+    Write-Host "Using password from component variable."
 }
 
 # --- Reset password for root (user ID 2) ---
